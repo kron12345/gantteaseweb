@@ -1,0 +1,17 @@
+.gantt-container {
+    display: flex;
+    height: 100vh; /* Volle Höhe des Viewports */
+  }
+  
+  .resources {
+    width: 20%; /* Linke Seite, z.B. 20% der Breite */
+    background-color: #f3f3f3;
+    padding: 10px;
+  }
+  
+  .planning {
+    width: 80%; /* Rechte Seite, z.B. 80% der Breite */
+    background-color: #ffffff;
+    padding: 10px;
+    overflow: auto;
+  }
