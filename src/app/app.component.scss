@@ -1,17 +1,20 @@
-.gantt-container {
-    display: flex;
-    height: 100vh; /* Volle Höhe des Viewports */
-  }
-  
-  .resources {
-    width: 20%; /* Linke Seite, z.B. 20% der Breite */
-    background-color: #f3f3f3;
-    padding: 10px;
-  }
-  
-  .planning {
-    width: 80%; /* Rechte Seite, z.B. 80% der Breite */
-    background-color: #ffffff;
-    padding: 10px;
-    overflow: auto;
-  }
+.layout {
+  display: flex;
+  height: 100vh; /* Volle Bildschirmhöhe */
+  overflow: hidden; /* Kein Scrollen des Layouts */
+}
+
+.resources, .gantt {
+  display: flex;
+  flex-direction: column; /* Zeilen vertikal anordnen */
+  overflow-y: auto; /* Vertikales Scrollen erlauben */
+}
+
+.resources {
+  width: 10%; /* Feste Breite für die Ressourcen */
+  border-right: 1px solid #ccc; /* Trennlinie */
+}
+
+.gantt {
+  width: 90%; /* Gantt-Chart nimmt den Rest ein */
+}

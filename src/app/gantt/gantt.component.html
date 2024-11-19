@@ -1,1 +1,21 @@
-<p>gantt works!</p>
+<div class="gantt-table-container">
+    <div class="planning-table-wrapper">
+        <table class="planning-table">
+            <thead class="planning-table__thead">
+                <tr class="planning-table__row">
+                    <th class="planning-table__cell" *ngFor="let time of visibleTimes">{{time}}</th>
+                </tr>
+            </thead>
+            <tbody class="planning-table__tbody">
+                <tr class="planning-table__row" *ngFor="let resourceId of resourceIds">
+                    <td class="planning-table__cell" *ngFor="let time of visibleTimes"></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    <div class="button-container">
+        <button title="zoom In" (click)="zoomIn()">+</button>
+        <button title="zoom Out" (click)="zoomOut()">−</button>
+        <button title="Edit">✎</button>
+    </div>
+</div>

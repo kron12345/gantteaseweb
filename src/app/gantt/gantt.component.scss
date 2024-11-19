@@ -1,0 +1,42 @@
+.gantt-table-container {
+    display: flex;
+    justify-content: space-between;  /* Abstand zwischen Tabelle und Buttons */
+    align-items: flex-start; /* Oberkante der Elemente ausrichten */
+    overflow: auto;
+    width: 100%;
+    height: 100vh;
+  }
+  
+  .zoom-controls {
+    margin-bottom: 10px;
+  }
+  
+  .button-container {
+    display: flex;
+    flex-direction: column; /* Buttons untereinander anordnen */
+    gap: 0.2rem; /* Abstand zwischen den Buttons */
+    width: 0.2rem; /* Feste Breite */
+    align-items: center; /* Buttons zentrieren */
+    padding: 1rem;
+    position: fixed; /* Buttons bleiben rechts am Bildschirm */
+    right: 0;
+    top: 0.5rem;
+    background-color: #f9f9f9; /* Hintergrundfarbe */
+    border-left: 1px solid #ccc; /* Trennlinie zur Tabelle */
+    height: 100vh;
+  }
+  
+  button {
+    width: 2rem; /* Quadratische Größe */
+    height: 2rem;
+    font-size: 1rem; /* Größe der Symbole */
+    border: 1px solid #ccc;
+    background-color: #fff;
+    border-radius: 4px; /* Leichte Abrundung */
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+  
+  button:hover {
+    background-color: #e0e0e0;
+  }

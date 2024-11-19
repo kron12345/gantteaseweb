@@ -1,4 +1,5 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
+import { ResourceService } from '../services/resource.service';
 import { Resource, StaffResource, VehicleResource } from '../interfaces/resource';
 
 @Component({
@@ -7,9 +8,13 @@ import { Resource, StaffResource, VehicleResource } from '../interfaces/resource
   styleUrl: './resources.component.scss'
 })
 
-export class ResourcesComponent {
-  resources: Resource[] = [
-    {id: 1, name: 'Rockefeller', firstName: 'Alice'} as StaffResource,
-    {id: 2, name: 'Merkel', firstName: 'Angela'} as StaffResource
-  ]
+export class ResourcesComponent implements OnInit {
+  resources: Resource[] = [];
+
+  constructor(private resourceService: ResourceService) {}
+
+  ngOnInit() {
+    this.resources = this.resourceService.getResources(); // Ressourcen laden
+  }
+
 }
