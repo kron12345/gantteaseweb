@@ -40,3 +40,18 @@
   button:hover {
     background-color: #e0e0e0;
   }
+
+  .status-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background-color: #f8f8f8;
+    border-top: 1px solid #ccc;
+    padding: 10px;
+    display: flex;
+    justify-content: space-between;
+    font-family: Arial, sans-serif;
+    font-size: 14px;
+    color: #333;
+  }

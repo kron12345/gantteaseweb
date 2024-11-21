@@ -1,21 +1,22 @@
 <div class="gantt-table-container">
-    <div class="planning-table-wrapper">
-        <cdk-virtual-scroll-viewport itemSize="50" class="planning-table-wrapper">
+    <div class="planning-table-wrapper" 
+    (scroll)="updateVisibleRange($event)"
+    (mousemove)="updateMouseTime($event)"
+    (wheel)="handleMouseZoom($event)" >
         <table class="planning-table">
             <thead class="planning-table__thead">
                 <tr class="planning-table__row">
-                    <th class="planning-table__cell" *cdkVirtualFor="let time of visibleTimes">
+                    <th class="planning-table__cell" *ngFor="let time of visibleTimes">
                         {{ formatTime(time)}}
                     </th>
                 </tr>
             </thead>
             <tbody class="planning-table__tbody">
                 <tr class="planning-table__row" *ngFor="let resourceId of resourceIds">
-                    <td class="planning-table__cell" *cdkVirtualFor="let time of visibleTimes"></td>
+                    <td class="planning-table__cell" *ngFor="let time of visibleTimes"></td>
                 </tr>
             </tbody>
         </table>
-    </cdk-virtual-scroll-viewport>
     </div>
     <div class="button-container">
         <button title="zoom In" (click)="zoomIn()">+</button>
@@ -23,3 +24,7 @@
         <button title="Edit">✎</button>
     </div>
 </div>
+<div class="status-bar">
+    <span>Bereich: {{ firstVisibleTime }} - {{ lastVisibleTime }}</span>
+    <span>Maus über: {{ mouseTime }}</span>
+  </div>

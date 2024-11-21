@@ -13,10 +13,15 @@ export class GanttComponent implements OnInit{
   //time data
   times: string[] = [];
   visibleTimes: string[] = [];
-  maxVisiblePoints = 50; // Maximal 50 Spalten in der Ansicht
+  maxVisiblePoints = 10; // Maximal 50 Spalten in der Ansicht
   zoomLevel: number = 1;
   currentZoomLevel = 1; // Start-Zoom-Level
   resourceIds: number[] = [];
+
+  firstVisibleTime: string = ''; // Erster sichtbarer Zeitpunkt
+  lastVisibleTime: string = '';  // Letzter sichtbarer Zeitpunkt
+  mouseTime: string = '';        // Zeitpunkt unter der Maus
+
   zoomLevels = [
     { level: 1, unit: 'year', step: 43200, label: '1 Jahr (1 Monat-Schritte)' },
     { level: 2, unit: 'half-year', step: 14400, label: '1 Halbjahr (10 Tage-Schritte)' },
@@ -61,7 +66,7 @@ export class GanttComponent implements OnInit{
   }
 
   // Berechnet die sichtbaren Zeitpunkte basierend auf dem Zoom-Level
-  setVisibleTimes() {
+  setVisibleTimes(startIndex: number = 0) {
     const zoom = this.zoomLevels.find(z => z.level === this.currentZoomLevel);
 
     if (!zoom) {
@@ -70,35 +75,64 @@ export class GanttComponent implements OnInit{
     }
   
     const step = zoom.step;
-    const middleTime = this.getMiddleTime();
-  
-    const middleIndex = this.times.findIndex(time => time === middleTime);
-    const startIndex = Math.max(middleIndex - Math.floor(this.maxVisiblePoints / 2), 0);
-  
+
     // Sichtbare Daten basierend auf Step und Maximalgröße
     this.visibleTimes = this.times
       .filter((_, index) => index % step === 0)
       .slice(startIndex, startIndex + this.maxVisiblePoints);
+      console.log('setVisibleTimes Aktuelle Zoomstufe:', this.currentZoomLevel);
+      console.log('setVisibleTimes Sichtbare Zeiten:', this.visibleTimes);
+
+      this.updateVisibleRange(); // Aktualisiere sichtbaren Bereich
   }
 
-  getMiddleTime(): string {
-    if (this.visibleTimes.length === 0) {
-      console.error('Keine sichtbaren Zeiten verfügbar!');
-      return '';
+  // Berechnet den sichtbaren Bereich basierend auf Scroll-Position
+  updateVisibleRange(event?: Event) {
+    const wrapper = event 
+      ? (event.target as HTMLElement) // Scroll-Event-Target
+      : document.querySelector('.planning-table-wrapper'); // Initial
+  
+    if (!wrapper) return;
+  
+    const scrollLeft = wrapper.scrollLeft; // Aktuelle horizontale Scroll-Position
+    const wrapperWidth = wrapper.clientWidth; // Breite des sichtbaren Bereichs
+    const totalWidth = wrapper.scrollWidth; // Gesamte Breite der Tabelle
+    const totalMinutes = this.times.length; // Gesamtanzahl der Minuten im Zeitraster
+  
+    // Minutengenauer Startzeitpunkt im sichtbaren Bereich
+    const startMinute = Math.floor((scrollLeft / totalWidth) * totalMinutes);
+  
+    // Sichtbare Minuten basierend auf der Wrapperbreite
+    const visibleMinutes = Math.floor((wrapperWidth / totalWidth) * totalMinutes);
+  
+    // Berechne Start- und Endzeit
+    const firstVisibleIndex = startMinute;
+    const lastVisibleIndex = Math.min(firstVisibleIndex + visibleMinutes, this.times.length - 1);
+  
+    this.firstVisibleTime = this.times[firstVisibleIndex];
+    this.lastVisibleTime = this.times[lastVisibleIndex];
+  }
+
+    // Aktualisiere die Zeit unter der Maus basierend auf ihrer Position
+    updateMouseTime(event: MouseEvent) {
+      const wrapper = event.currentTarget as HTMLElement;
+    
+      const wrapperRect = wrapper.getBoundingClientRect(); // Position des Wrappers im Viewport
+      const mouseX = event.clientX - wrapperRect.left;     // Maus-X-Position relativ zum Wrapper
+      const scrollLeft = wrapper.scrollLeft;              // Aktuelle horizontale Scroll-Position
+      const totalWidth = wrapper.scrollWidth;             // Gesamte Breite der Tabelle
+      const totalMinutes = this.times.length;             // Gesamtanzahl der Minuten im Zeitraster
+    
+      // Gesamtzeit basierend auf der Mausposition berechnen
+      const absoluteX = scrollLeft + mouseX; // Mausposition relativ zum gesamten Scrollbereich
+      const timeIndex = Math.floor((absoluteX / totalWidth) * totalMinutes);
+    
+      if (timeIndex >= 0 && timeIndex < this.times.length) {
+        this.mouseTime = this.times[timeIndex];
+      } else {
+        this.mouseTime = 'Außerhalb';
+      }
     }
-
-    const middleIndex = Math.floor(this.visibleTimes.length / 2);
-    return this.visibleTimes[middleIndex];
-  }
-
-  // Gibt die Schrittweite basierend auf dem Zoom-Level zurück
-  getStepForZoomLevel(): number {
-    // Einfaches Beispiel: Schrittweite basierend auf Zoom-Level
-    if (this.zoomLevel >= 365) return this.zoomLevel * 24 * 60; // Jahr
-    if (this.zoomLevel >= 30) return this.zoomLevel * 24; // Monat
-    if (this.zoomLevel >= 1) return this.zoomLevel; // Tag bis Stunde
-    return 1; // Minuten
-  }
 
   formatTime(time: string): string {
     const zoom = this.zoomLevels.find(z => z.level === this.currentZoomLevel);
@@ -147,49 +181,77 @@ getWeekNumber(date: Date): number {
   return Math.ceil((pastDaysOfYear + startOfYear.getDay() + 1) / 7);
 }
 
+handleMouseZoom(event: WheelEvent) {
+  event.preventDefault(); // Verhindert das Standard-Scroll-Verhalten
+
+  const zoomIn = event.deltaY < 0; // Negativer Wert: Zoom-In, Positiver Wert: Zoom-Out
+  const wrapper = event.currentTarget as HTMLElement;
+
+  // Mausposition relativ zum Wrapper
+  const wrapperRect = wrapper.getBoundingClientRect();
+  const mouseX = event.clientX - wrapperRect.left;
+
+  // Gesamte Breite der Tabelle und Zeitspanne
+  const totalWidth = wrapper.scrollWidth;
+  const totalMinutes = this.times.length;
+
+  // Zeitpunkt unter der Maus berechnen
+  const scrollLeft = wrapper.scrollLeft;
+  const absoluteX = scrollLeft + mouseX;
+  const mouseTimeIndex = Math.floor((absoluteX / totalWidth) * totalMinutes);
+  const mouseTime = this.times[mouseTimeIndex];
+
+  if (!mouseTime) return;
+
+  // Zoom-Level ändern
+  if (zoomIn && this.currentZoomLevel > 1) {
+    this.currentZoomLevel--;
+  } else if (!zoomIn && this.currentZoomLevel < 13) {
+    this.currentZoomLevel++;
+  }
+
+  // Sichtbare Zeiten aktualisieren
+  this.setVisibleTimes();
+
+  // Nach dem Zoom zur gespeicherten Zeit scrollen
+  this.scrollToTime(mouseTime, wrapper);
+}
+
   // Zoom in
   zoomIn() {
     if (this.currentZoomLevel > 1) {
-      const middleTime = this.getMiddleTime(); // Aktuelle Mitte merken
       this.currentZoomLevel--;
   
-      this.setVisibleTimes(); // Sichtbare Zeiten basierend auf neuem Zoom-Level
-      this.scrollToTime(middleTime); // Behalte die Mitte bei
+      // Berechne den neuen Startindex
+      const startIndex = 0;
+
+      this.setVisibleTimes(startIndex); // Setze neue sichtbare Zeiten
     }
   }
   
   // Zoom out
   zoomOut() {
     if (this.currentZoomLevel < 13) {
-      const middleTime = this.getMiddleTime(); // Aktuelle Mitte merken
       this.currentZoomLevel++;
   
-      this.setVisibleTimes(); // Sichtbare Zeiten basierend auf neuem Zoom-Level
-      this.scrollToTime(middleTime); // Behalte die Mitte bei
+      // Berechne den neuen Startindex
+      const startIndex = 0;
+
+      this.setVisibleTimes(startIndex); // Setze neue sichtbare Zeiten
     }
   }
-
-    scrollToTime(targetTime: string) {
-      console.log('Aktuelle Zoomstufe:', this.currentZoomLevel);
-      console.log('Sichtbare Zeiten:', this.visibleTimes);
-      const targetIndex = this.times.findIndex(time => time === targetTime);
-
-      if (targetIndex === -1) {
-        console.error('Zeit nicht gefunden:', targetTime);
-        return;
-      }
-    
-      // Setze die neue Mitte basierend auf der Zielzeit
-      const middleIndex = targetIndex;
-      const startIndex = Math.max(middleIndex - Math.floor(this.maxVisiblePoints / 2), 0);
-    
-      const zoom = this.zoomLevels.find(z => z.level === this.currentZoomLevel);
-      if (!zoom) return;
-    
-      const step = zoom.step;
-    
-      this.visibleTimes = this.times
-        .filter((_, index) => index % step === 0)
-        .slice(startIndex, startIndex + this.maxVisiblePoints);
-    }
+  scrollToTime(time: string, wrapper: HTMLElement) {
+    const totalWidth = wrapper.scrollWidth;
+    const totalMinutes = this.times.length;
+  
+    // Index der gespeicherten Zeit
+    const timeIndex = this.times.findIndex(t => t === time);
+    if (timeIndex === -1) return;
+  
+    // Pixelposition der gespeicherten Zeit berechnen
+    const targetX = (timeIndex / totalMinutes) * totalWidth;
+  
+    // Neue Scrollposition setzen
+    wrapper.scrollLeft = targetX - wrapper.clientWidth / 2; // Zentriert die Zeit im Sichtbereich
+  }
 }
