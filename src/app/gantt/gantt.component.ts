@@ -11,8 +11,10 @@ import { CommonModule } from '@angular/common';
 export class GanttComponent implements OnInit{
 
   //time data
+  startDate = new Date(2024, 0, 1); // Startdatum: 1. Januar 2024
+  endDate = new Date(2025, 0, 3); // Enddatum: 1. Januar 2025
   times: string[] = [];
-  visibleTimes: string[] = [];
+  visibleTimes: Date[] = [];
   maxVisiblePoints = 10; // Maximal 50 Spalten in der Ansicht
   zoomLevel: number = 1;
   currentZoomLevel = 1; // Start-Zoom-Level
@@ -44,27 +46,9 @@ export class GanttComponent implements OnInit{
     const resources = this.resourceService.getResources(); // Ressourcen laden
     this.resourceIds = resources.map(resource => resource.id); // Nur die IDs extrahieren
     // Initialisiere das Zeitraster
-    this.initializeTimes();
     this.setVisibleTimes();  
   }
   
-  // Initialisiert die Zeitangaben von 1 Jahr bis zu einer Minute
-  initializeTimes() {
-    const start = new Date(2024, 0, 1); // Startdatum: 1. Januar 2024
-    const end = new Date(2025, 0, 3); // Enddatum: 1. Januar 2025
-
-    const times: string[] = [];
-    let current = start;
-
-    // Schritte in Minuten (kleinste Einheit)
-    while (current < end) {
-      times.push(current.toISOString()); // ISO-Format für Klarheit
-      current = new Date(current.getTime() + 60 * 1000); // +1 Minute
-    }
-
-    this.times = times;
-  }
-
   // Berechnet die sichtbaren Zeitpunkte basierend auf dem Zoom-Level
   setVisibleTimes(startIndex: number = 0) {
     const zoom = this.zoomLevels.find(z => z.level === this.currentZoomLevel);
@@ -75,15 +59,25 @@ export class GanttComponent implements OnInit{
     }
   
     const step = zoom.step;
+    const firstTime = this.startDate.getTime();
+    const lastTime = this.endDate.getTime();
+    const maxStartTime = lastTime - step * this.maxVisiblePoints * 60000;
+    let startTime =  firstTime + startIndex * 60000;
 
-    // Sichtbare Daten basierend auf Step und Maximalgröße
-    this.visibleTimes = this.times
-      .filter((_, index) => index % step === 0)
-      .slice(startIndex, startIndex + this.maxVisiblePoints);
-      console.log('setVisibleTimes Aktuelle Zoomstufe:', this.currentZoomLevel);
-      console.log('setVisibleTimes Sichtbare Zeiten:', this.visibleTimes);
+    if (startTime > maxStartTime){
+      startTime = maxStartTime;
+    }
 
-      this.updateVisibleRange(); // Aktualisiere sichtbaren Bereich
+    let dates: Date[] = [];
+
+    for (let i = 0; i < this.maxVisiblePoints; i++) {
+      let visibleTime = firstTime + (startIndex * 60000) + (i * 60000);
+      dates.push(new Date(visibleTime));
+    }
+
+    this.visibleTimes = dates;
+
+    this.updateVisibleRange(); // Aktualisiere sichtbaren Bereich
   }
 
   // Berechnet den sichtbaren Bereich basierend auf Scroll-Position
@@ -118,27 +112,23 @@ export class GanttComponent implements OnInit{
       const wrapper = event.currentTarget as HTMLElement;
     
       const wrapperRect = wrapper.getBoundingClientRect(); // Position des Wrappers im Viewport
+      const wrapperWidth = wrapperRect.width; // Breite des Wrappers
       const mouseX = event.clientX - wrapperRect.left;     // Maus-X-Position relativ zum Wrapper
-      const scrollLeft = wrapper.scrollLeft;              // Aktuelle horizontale Scroll-Position
-      const totalWidth = wrapper.scrollWidth;             // Gesamte Breite der Tabelle
-      const totalMinutes = this.times.length;             // Gesamtanzahl der Minuten im Zeitraster
-    
-      // Gesamtzeit basierend auf der Mausposition berechnen
-      const absoluteX = scrollLeft + mouseX; // Mausposition relativ zum gesamten Scrollbereich
-      const timeIndex = Math.floor((absoluteX / totalWidth) * totalMinutes);
-    
-      if (timeIndex >= 0 && timeIndex < this.times.length) {
-        this.mouseTime = this.times[timeIndex];
-      } else {
-        this.mouseTime = 'Außerhalb';
-      }
+      const mousePercentage = (mouseX / wrapperWidth);
+
+      const firstTime = new Date(this.firstVisibleTime).getTime();
+      const lastTime = new Date(this.lastVisibleTime).getTime();
+      const totalTime = lastTime - firstTime
+      // Berechnung der absoluten Zeitposition basierend auf der Maus
+      const timeIndex = firstTime + totalTime * mousePercentage;
+      this.mouseTime = new Date(timeIndex).toISOString();
     }
 
-  formatTime(time: string): string {
+  formatTime(date: Date): string {
     const zoom = this.zoomLevels.find(z => z.level === this.currentZoomLevel);
-    if (!zoom) return time;
+    if (!zoom) return date.toISOString();
   
-    const date = new Date(time);
+    //const date = new Date(time);
   
     switch (zoom.unit) {
       case 'year':
@@ -162,7 +152,7 @@ export class GanttComponent implements OnInit{
       case 'minute':
         return `${date.getHours()}:${date.getMinutes().toString().padStart(2, '0')}`; // 12:30
       default:
-        return time;
+        return date.toISOString();
     }
   }
 
@@ -253,5 +243,10 @@ handleMouseZoom(event: WheelEvent) {
   
     // Neue Scrollposition setzen
     wrapper.scrollLeft = targetX - wrapper.clientWidth / 2; // Zentriert die Zeit im Sichtbereich
+  }
+
+  getZoomLabel(): string {
+    const zoom = this.zoomLevels.find(z => z.level === this.currentZoomLevel);
+    return zoom ? zoom.label : 'Unbekannter Zoom-Level';
   }
 }

@@ -6,6 +6,15 @@
     width: 100%;
     height: 100vh;
   }
+
+  .planning-table-wrapper {
+    overflow-x: auto; /* Ermöglicht horizontales Scrollen */
+    white-space: nowrap; /* Verhindert Zeilenumbrüche */
+  }
+  
+  .planning-table {
+    min-width: 200%; /* Tabelle doppelt so breit wie der Wrapper */
+  }
   
   .zoom-controls {
     margin-bottom: 10px;

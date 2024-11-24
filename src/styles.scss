@@ -1,2 +1,10 @@
 /* You can add global styles to this file, and also import other style files */
+
+@font-face {
+    font-family: 'Iosevka Nerd Font';
+    src: url('/assets/fonts/IosevkaNerdFontMono-Medium') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+  }
+
 @import './styles/planning-table.scss';
