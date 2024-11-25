@@ -15,7 +15,7 @@ export class GanttComponent implements OnInit{
   endDate = new Date(2025, 0, 3); // Enddatum: 1. Januar 2025
   times: string[] = [];
   visibleTimes: Date[] = [];
-  maxVisiblePoints = 10; // Maximal 50 Spalten in der Ansicht
+  maxVisiblePoints = 40; // Maximal 50 Spalten in der Ansicht
   zoomLevel: number = 1;
   currentZoomLevel = 1; // Start-Zoom-Level
   resourceIds: number[] = [];
@@ -25,19 +25,21 @@ export class GanttComponent implements OnInit{
   mouseTime: string = '';        // Zeitpunkt unter der Maus
 
   zoomLevels = [
-    { level: 1, unit: 'year', step: 43200, label: '1 Jahr (1 Monat-Schritte)' },
-    { level: 2, unit: 'half-year', step: 14400, label: '1 Halbjahr (10 Tage-Schritte)' },
-    { level: 3, unit: 'quarter', step: 7200, label: '1 Quartal (5 Tage-Schritte)' },
-    { level: 4, unit: 'month', step: 1440, label: '1 Monat (1 Tag-Schritte)' },
-    { level: 5, unit: 'week', step: 720, label: '1 Woche (12 Stunden-Schritte)' },
-    { level: 6, unit: '3-days', step: 360, label: '3 Tage (6 Stunden-Schritte)' },
-    { level: 7, unit: 'day', step: 60, label: '1 Tag (1 Stunde-Schritte)' },
-    { level: 8, unit: '12-hours', step: 30, label: '12 Stunden (30 Minuten-Schritte)' },
-    { level: 9, unit: '6-hours', step: 15, label: '6 Stunden (15 Minuten-Schritte)' },
-    { level: 10, unit: '3-hours', step: 10, label: '3 Stunden (10 Minuten-Schritte)' },
-    { level: 11, unit: '1-hour', step: 5, label: '1 Stunde (5 Minuten-Schritte)' },
-    { level: 12, unit: '30-minutes', step: 2, label: '30 Minuten (2 Minuten-Schritte)' },
-    { level: 13, unit: '15-minutes', step: 1, label: '15 Minuten (1 Minute-Schritte)' }
+    { level: 1, unit: 'week', step: 604800000, label: '1 Woche 1', columnWidth: 12 },
+    { level: 2, unit: 'week', step: 604800000, label: '1 Woche 2', columnWidth: 24 },
+    { level: 3, unit: 'week', step: 604800000, label: '1 Woche 3', columnWidth: 48 },
+    { level: 4, unit: 'day', step: 86400000, label: '1 Tag 1', columnWidth: 12 },
+    { level: 5, unit: 'day', step: 86400000, label: '1 Tag 2', columnWidth: 24 },
+    { level: 6, unit: 'day', step: 86400000, label: '1 Tag 3', columnWidth: 48 },
+    { level: 7, unit: '12-hours', step: 43200000, label: '12 Stunden 1', columnWidth: 12 },
+    { level: 8, unit: '12-hours', step: 43200000, label: '12 Stunden 2', columnWidth: 24 },
+    { level: 9, unit: '12-hours', step: 43200000, label: '12 Stunden 3', columnWidth: 48 },
+    { level: 10, unit: '1-hour', step: 3600000, label: '1 Stunde 1', columnWidth: 12 },
+    { level: 11, unit: '1-hour', step: 3600000, label: '1 Stunde 2', columnWidth: 24 },
+    { level: 12, unit: '1-hour', step: 3600000, label: '1 Stunde 3', columnWidth: 48 },
+    { level: 13, unit: '30-minutes', step: 1800000, label: '30 Minuten 1', columnWidth: 12 },
+    { level: 14, unit: '30-minutes', step: 1800000, label: '30 Minuten 2', columnWidth: 24 },
+    { level: 15, unit: '30-minutes', step: 1800000, label: '30 Minuten 3', columnWidth: 48 }
   ];
 
   constructor(private resourceService: ResourceService) {}
@@ -61,8 +63,8 @@ export class GanttComponent implements OnInit{
     const step = zoom.step;
     const firstTime = this.startDate.getTime();
     const lastTime = this.endDate.getTime();
-    const maxStartTime = lastTime - step * this.maxVisiblePoints * 60000;
-    let startTime =  firstTime + startIndex * 60000;
+    const maxStartTime = lastTime - step * this.maxVisiblePoints;
+    let startTime =  firstTime + startIndex;
 
     if (startTime > maxStartTime){
       startTime = maxStartTime;
@@ -70,8 +72,11 @@ export class GanttComponent implements OnInit{
 
     let dates: Date[] = [];
 
-    for (let i = 0; i < this.maxVisiblePoints; i++) {
-      let visibleTime = firstTime + (startIndex * 60000) + (i * 60000);
+    const width = zoom.columnWidth;
+    const columns = Math.floor(12 / width * this.maxVisiblePoints);
+
+    for (let i = 0; i < columns; i++) {
+      let visibleTime = firstTime + startIndex + i * step;
       dates.push(new Date(visibleTime));
     }
 
@@ -230,6 +235,12 @@ handleMouseZoom(event: WheelEvent) {
       this.setVisibleTimes(startIndex); // Setze neue sichtbare Zeiten
     }
   }
+
+  getColumnWidth(): number {
+    const zoom = this.zoomLevels.find(z => z.level === this.currentZoomLevel);
+    return zoom ? zoom.columnWidth : 3; // Standardwert: 3rem
+  }
+
   scrollToTime(time: string, wrapper: HTMLElement) {
     const totalWidth = wrapper.scrollWidth;
     const totalMinutes = this.times.length;
