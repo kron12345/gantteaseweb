@@ -8,15 +8,24 @@
                 <tr class="planning-table__row">
                     <th class="planning-table__cell" 
                     *ngFor="let time of visibleTimes"
+                    [attr.colspan]="time.colspan"
                     [ngStyle]="{ 'width': getColumnWidth() + 'rem' }">
-                        {{ formatTime(time)}}
+                        {{ formatTime(time.start)}}
                     </th>
+                </tr>
+                <tr class="planning-table__row">
+                    <ng-container *ngFor="let time of visibleTimes">
+                      <th *ngFor="let sub of time.subtimes" class="planning-table__cell">
+                        {{ sub }}
+                      </th>
+                    </ng-container>
                 </tr>
             </thead>
             <tbody class="planning-table__tbody">
                 <tr class="planning-table__row" *ngFor="let resourceId of resourceIds">
                     <td class="planning-table__cell" 
                     *ngFor="let time of visibleTimes"
+                    [attr.colspan]="time.colspan"
                     [ngStyle]="{ 'width': getColumnWidth() + 'rem' }"></td>
                 </tr>
             </tbody>

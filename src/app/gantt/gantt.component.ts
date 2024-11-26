@@ -14,15 +14,19 @@ export class GanttComponent implements OnInit{
   startDate = new Date(2024, 0, 1); // Startdatum: 1. Januar 2024
   endDate = new Date(2025, 0, 3); // Enddatum: 1. Januar 2025
   times: string[] = [];
-  visibleTimes: Date[] = [];
+  visibleTimes: {start: Date; colspan: number; subtimes: string[];}[] = [];
   maxVisiblePoints = 40; // Maximal 50 Spalten in der Ansicht
   zoomLevel: number = 1;
   currentZoomLevel = 1; // Start-Zoom-Level
   resourceIds: number[] = [];
+  totalTime: number = 0;
 
-  firstVisibleTime: string = ''; // Erster sichtbarer Zeitpunkt
-  lastVisibleTime: string = '';  // Letzter sichtbarer Zeitpunkt
-  mouseTime: string = '';        // Zeitpunkt unter der Maus
+  groupedTimes: { start: Date; end: Date }[] = [];
+  subTimes: { label: string; colspan?: number }[] = [];
+
+  firstVisibleTime: Date = new Date(); // Erster sichtbarer Zeitpunkt
+  lastVisibleTime: Date = new Date();  // Letzter sichtbarer Zeitpunkt
+  mouseTime: Date = new Date();         // Zeitpunkt unter der Maus
 
   zoomLevels = [
     { level: 1, unit: 'week', step: 604800000, label: '1 Woche 1', columnWidth: 12 },
@@ -51,8 +55,14 @@ export class GanttComponent implements OnInit{
     this.setVisibleTimes();  
   }
   
+  private roundToMidnight(date: Date): Date {
+    const roundedDate = new Date(date); // Kopiere das Datum
+    roundedDate.setHours(0, 0, 0, 0); // Setze Stunden, Minuten, Sekunden und Millisekunden auf 0
+    return roundedDate;
+  }
+
   // Berechnet die sichtbaren Zeitpunkte basierend auf dem Zoom-Level
-  setVisibleTimes(startIndex: number = 0) {
+  setVisibleTimes(timeIndex: Date = new Date()) {
     const zoom = this.zoomLevels.find(z => z.level === this.currentZoomLevel);
 
     if (!zoom) {
@@ -63,26 +73,71 @@ export class GanttComponent implements OnInit{
     const step = zoom.step;
     const firstTime = this.startDate.getTime();
     const lastTime = this.endDate.getTime();
-    const maxStartTime = lastTime - step * this.maxVisiblePoints;
-    let startTime =  firstTime + startIndex;
-
-    if (startTime > maxStartTime){
-      startTime = maxStartTime;
-    }
-
-    let dates: Date[] = [];
-
     const width = zoom.columnWidth;
     const columns = Math.floor(12 / width * this.maxVisiblePoints);
+    const index = timeIndex.getTime() < firstTime ? firstTime : timeIndex.getTime();
+    this.totalTime = step * columns;
+    let startTime =  index - this.totalTime / 2;
 
-    for (let i = 0; i < columns; i++) {
-      let visibleTime = firstTime + startIndex + i * step;
-      dates.push(new Date(visibleTime));
+    if (startTime > lastTime - this.totalTime){
+      startTime = lastTime - this.totalTime;
+    }
+    if (startTime < firstTime){
+      startTime = firstTime;
     }
 
-    this.visibleTimes = dates;
+    if (zoom.unit === 'day' || zoom.unit.includes('hour') === false) {
+      startTime = this.roundToMidnight(new Date(startTime)).getTime();
+    }
+
+    this.visibleTimes = [];
+
+    for(let i=0; i < columns; i++){
+      const startTimeForGroup = new Date(startTime + i * step);
+      const group = {
+        start: startTimeForGroup, // Startzeit der Gruppe
+        colspan: 1, // Default: 1 Spalte pro Eintrag (anpassen je nach Gruppierung)
+        subtimes: [] as string []
+      };
+
+      // Subtimes basierend auf Zoom-Level füllen
+      if (zoom.unit === 'week') {
+        // Wochentage hinzufügen (z. B. Mo, Di, Mi ...)
+        for (let j = 0; j < 7; j++) {
+          const subTime = new Date((startTime + i * step) + (j * (step / 7)));
+          group.subtimes.push(this.getWeekDay(subTime));
+        }
+        group.colspan = 7; // Jede Woche deckt 7 Spalten ab
+        i += 6; // Überspringe die nächsten 6 Spalten, da sie zur Gruppe gehören
+      } else if (zoom.unit === 'day') {
+      // Stunden eines Tages hinzufügen (z. B. 00:00, 01:00 ...)
+        for (let j = 0; j < 24; j++) {
+          const subTime = new Date(startTime + (i * step) + j * (step / 24));
+          group.subtimes.push(`${subTime.getHours()}:00`);
+        }
+        group.colspan = 24; // Ein Tag deckt 24 Stunden ab
+      } else if (zoom.unit === '12-hours' || zoom.unit === '1-hour') {
+      // Minuten oder Stunden hinzufügen
+      for (let j = 0; j < (step / 3600000); j++) {
+        const subTime = new Date(startTime + i * step + j * (step / 2));
+        group.subtimes.push(`${subTime.getHours()}:${subTime.getMinutes().toString().padStart(2, '0')}`);
+      }
+      group.colspan = Math.floor(step / 3600000); // Je nach Step
+      } else {
+      // Standard: Keine Unterzeiten, colspan = 1
+        group.subtimes = [this.formatTime(startTimeForGroup)];
+      }
+
+      // Gruppe zur Liste hinzufügen
+      this.visibleTimes.push(group);
+    }
 
     this.updateVisibleRange(); // Aktualisiere sichtbaren Bereich
+  }
+
+  getWeekDay(date: Date): string {
+    const days = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'];
+    return days[date.getDay()];
   }
 
   // Berechnet den sichtbaren Bereich basierend auf Scroll-Position
@@ -91,43 +146,44 @@ export class GanttComponent implements OnInit{
       ? (event.target as HTMLElement) // Scroll-Event-Target
       : document.querySelector('.planning-table-wrapper'); // Initial
   
-    if (!wrapper) return;
-  
+    if (!wrapper) {
+      console.error('Wrapper nicht gefunden!');
+      return;
+    }
+
+    const firstTime = this.visibleTimes[0].start.getTime();
     const scrollLeft = wrapper.scrollLeft; // Aktuelle horizontale Scroll-Position
     const wrapperWidth = wrapper.clientWidth; // Breite des sichtbaren Bereichs
     const totalWidth = wrapper.scrollWidth; // Gesamte Breite der Tabelle
-    const totalMinutes = this.times.length; // Gesamtanzahl der Minuten im Zeitraster
+    const totalTime = this.totalTime; // Gesamtanzahl der Minuten im Zeitraster
   
     // Minutengenauer Startzeitpunkt im sichtbaren Bereich
-    const startMinute = Math.floor((scrollLeft / totalWidth) * totalMinutes);
+    const startTime = Math.floor((scrollLeft / totalWidth) * totalTime);
   
     // Sichtbare Minuten basierend auf der Wrapperbreite
-    const visibleMinutes = Math.floor((wrapperWidth / totalWidth) * totalMinutes);
+    const visibleTime = Math.floor((wrapperWidth / totalWidth) * totalTime);
   
-    // Berechne Start- und Endzeit
-    const firstVisibleIndex = startMinute;
-    const lastVisibleIndex = Math.min(firstVisibleIndex + visibleMinutes, this.times.length - 1);
-  
-    this.firstVisibleTime = this.times[firstVisibleIndex];
-    this.lastVisibleTime = this.times[lastVisibleIndex];
+    this.firstVisibleTime = new Date(firstTime + startTime);
+    //this.firstVisibleTime = new Date()
+    this.lastVisibleTime = new Date(firstTime + startTime + visibleTime);
   }
 
-    // Aktualisiere die Zeit unter der Maus basierend auf ihrer Position
-    updateMouseTime(event: MouseEvent) {
-      const wrapper = event.currentTarget as HTMLElement;
+  // Aktualisiere die Zeit unter der Maus basierend auf ihrer Position
+  updateMouseTime(event: MouseEvent) {
+    const wrapper = event.currentTarget as HTMLElement;
     
-      const wrapperRect = wrapper.getBoundingClientRect(); // Position des Wrappers im Viewport
-      const wrapperWidth = wrapperRect.width; // Breite des Wrappers
-      const mouseX = event.clientX - wrapperRect.left;     // Maus-X-Position relativ zum Wrapper
-      const mousePercentage = (mouseX / wrapperWidth);
+    const wrapperRect = wrapper.getBoundingClientRect(); // Position des Wrappers im Viewport
+    const wrapperWidth = wrapperRect.width; // Breite des Wrappers
+    const mouseX = event.clientX - wrapperRect.left;     // Maus-X-Position relativ zum Wrapper
+    const mousePercentage = Math.max(0, Math.min(1, mouseX / wrapperWidth));
 
-      const firstTime = new Date(this.firstVisibleTime).getTime();
-      const lastTime = new Date(this.lastVisibleTime).getTime();
-      const totalTime = lastTime - firstTime
+    const firstTime = this.firstVisibleTime.getTime();
+    const lastTime = this.lastVisibleTime.getTime();
+    const totalTime = lastTime - firstTime;
       // Berechnung der absoluten Zeitposition basierend auf der Maus
-      const timeIndex = firstTime + totalTime * mousePercentage;
-      this.mouseTime = new Date(timeIndex).toISOString();
-    }
+    const timeIndex = firstTime + totalTime * mousePercentage;
+    this.mouseTime = new Date(timeIndex);
+  }
 
   formatTime(date: Date): string {
     const zoom = this.zoomLevels.find(z => z.level === this.currentZoomLevel);
@@ -179,48 +235,59 @@ getWeekNumber(date: Date): number {
 handleMouseZoom(event: WheelEvent) {
   event.preventDefault(); // Verhindert das Standard-Scroll-Verhalten
 
-  const zoomIn = event.deltaY < 0; // Negativer Wert: Zoom-In, Positiver Wert: Zoom-Out
   const wrapper = event.currentTarget as HTMLElement;
 
-  // Mausposition relativ zum Wrapper
+  if (!this.mouseTime) return;
+
+  // Mausposition relativ zur Wrapper-Breite
   const wrapperRect = wrapper.getBoundingClientRect();
-  const mouseX = event.clientX - wrapperRect.left;
-
-  // Gesamte Breite der Tabelle und Zeitspanne
-  const totalWidth = wrapper.scrollWidth;
-  const totalMinutes = this.times.length;
-
-  // Zeitpunkt unter der Maus berechnen
-  const scrollLeft = wrapper.scrollLeft;
-  const absoluteX = scrollLeft + mouseX;
-  const mouseTimeIndex = Math.floor((absoluteX / totalWidth) * totalMinutes);
-  const mouseTime = this.times[mouseTimeIndex];
-
-  if (!mouseTime) return;
+  const mouseX = event.clientX - wrapperRect.left; // Mausposition relativ zum Wrapper
+  const mouseRatio = mouseX / wrapperRect.width; // Verhältnis der Mausposition im Wrapper (0 bis 1)
 
   // Zoom-Level ändern
-  if (zoomIn && this.currentZoomLevel > 1) {
-    this.currentZoomLevel--;
-  } else if (!zoomIn && this.currentZoomLevel < 13) {
-    this.currentZoomLevel++;
+  const zoomDelta = Math.sign(event.deltaY); // -1 für rein, 1 für raus
+  const newZoomLevel = this.currentZoomLevel - zoomDelta; // Berechne neues Zoom-Level
+
+  if (newZoomLevel >= 1 && newZoomLevel <= this.zoomLevels.length) {
+    // Zeit unter der Maus vor dem Zoom
+    const mouseTimeBeforeZoom = this.mouseTime.getTime();
+
+    this.currentZoomLevel = newZoomLevel;
+    // Sichtbare Zeiten aktualisieren
+    this.setVisibleTimes(this.mouseTime);
+
+    // Zeit unter der Maus nach dem Zoom berechnen
+    const firstVisibleTime = this.visibleTimes[0].start.getTime();
+    const totalVisibleTime = this.totalTime;
+
+    // Neue Scrollposition berechnen, sodass die Zeit unter der Maus gleich bleibt
+    const targetScrollLeft = ((mouseTimeBeforeZoom - firstVisibleTime) / totalVisibleTime) * wrapper.scrollWidth;
+
+    // Scrollen, um die Zeit unter der Maus zu erhalten
+    wrapper.scrollTo({
+      left: targetScrollLeft - mouseRatio * wrapper.clientWidth,
+      behavior: 'smooth'
+    });
   }
+}
 
-  // Sichtbare Zeiten aktualisieren
-  this.setVisibleTimes();
-
-  // Nach dem Zoom zur gespeicherten Zeit scrollen
-  this.scrollToTime(mouseTime, wrapper);
+private smoothTransition(callback: () => void, duration: number = 300) {
+  document.body.style.transition = `all ${duration}ms ease-in-out`; // Optional: Transition für globale Effekte
+  callback();
+  setTimeout(() => {
+    document.body.style.transition = ''; // Transition zurücksetzen
+  }, duration);
 }
 
   // Zoom in
   zoomIn() {
     if (this.currentZoomLevel > 1) {
       this.currentZoomLevel--;
-  
-      // Berechne den neuen Startindex
-      const startIndex = 0;
 
-      this.setVisibleTimes(startIndex); // Setze neue sichtbare Zeiten
+      const index = this.firstVisibleTime.getTime() + this.totalTime / 2
+
+      this.smoothTransition(() => this.setVisibleTimes(new Date(index))); // Setze neue sichtbare Zeiten
+      this.updateVisibleRange();
     }
   }
   
@@ -228,11 +295,11 @@ handleMouseZoom(event: WheelEvent) {
   zoomOut() {
     if (this.currentZoomLevel < 13) {
       this.currentZoomLevel++;
-  
-      // Berechne den neuen Startindex
-      const startIndex = 0;
 
-      this.setVisibleTimes(startIndex); // Setze neue sichtbare Zeiten
+      const index = this.firstVisibleTime.getTime() + this.totalTime / 2
+
+      this.smoothTransition(() => this.setVisibleTimes(new Date(index))); // Setze neue sichtbare Zeiten
+      this.updateVisibleRange();
     }
   }
 
@@ -241,19 +308,17 @@ handleMouseZoom(event: WheelEvent) {
     return zoom ? zoom.columnWidth : 3; // Standardwert: 3rem
   }
 
-  scrollToTime(time: string, wrapper: HTMLElement) {
+  scrollToTime(time: Date, wrapper: HTMLElement) {
     const totalWidth = wrapper.scrollWidth;
-    const totalMinutes = this.times.length;
-  
-    // Index der gespeicherten Zeit
-    const timeIndex = this.times.findIndex(t => t === time);
-    if (timeIndex === -1) return;
   
     // Pixelposition der gespeicherten Zeit berechnen
-    const targetX = (timeIndex / totalMinutes) * totalWidth;
+    const targetX = (time.getTime() / this.totalTime) * totalWidth;
   
     // Neue Scrollposition setzen
-    wrapper.scrollLeft = targetX - wrapper.clientWidth / 2; // Zentriert die Zeit im Sichtbereich
+    wrapper.scrollTo({
+      left: targetX - wrapper.clientWidth / 2,
+      behavior: 'smooth'
+    });
   }
 
   getZoomLabel(): string {

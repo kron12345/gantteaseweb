@@ -10,10 +10,15 @@
   .planning-table-wrapper {
     overflow-x: auto; /* Ermöglicht horizontales Scrollen */
     white-space: nowrap; /* Verhindert Zeilenumbrüche */
+    transition: all 0.3s ease-in-out;
   }
   
   .planning-table {
     min-width: 200%; /* Tabelle doppelt so breit wie der Wrapper */
+  }
+
+  .planning-table__cell {
+    transition: width 0.3s ease-in-out;
   }
   
   .zoom-controls {
