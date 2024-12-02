@@ -8,17 +8,9 @@ import { ResourcesComponent } from './resources/resources.component';
 import { GanttComponent } from './gantt/gantt.component';
 
 @NgModule({
-  declarations: [
-    AppComponent,
-    ResourcesComponent,
-    GanttComponent
-  ],
-  imports: [
-    BrowserModule,
-    AppRoutingModule,
-    ScrollingModule
-  ],
+  declarations: [AppComponent, ResourcesComponent, GanttComponent],
+  imports: [BrowserModule, AppRoutingModule, ScrollingModule],
   providers: [],
-  bootstrap: [AppComponent]
+  bootstrap: [AppComponent],
 })
-export class AppModule { }
+export class AppModule {}

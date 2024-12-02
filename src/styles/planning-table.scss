@@ -1,47 +1,59 @@
-
 .planning-table-wrapper {
-    width: 100%; /* Der Platz, den die Tabelle im Layout einnimmt */
-    overflow-x: auto; /* Ermöglicht horizontales Scrollen */
-    border: 1px solid #999; /* Optional: Rahmen um die Tabelle */
-    padding: 0rem;
-  }
-
-.planning-table {
-    min-width: 100%;
-    border-collapse: collapse; /* Ränder der Zellen zusammenfassen */
-    
-    &__thead {
-        th {
-          background-color: #f0f0f0;
-          font-weight: bold;
-          border: 1px solid #ccc;
-          text-align: center;
-          white-space: nowrap; /* Verhindert Umbrüche innerhalb der Zellen */
-        }
-      }
-    
-      &__tbody {
-        td {
-          border: 1px solid #ccc;
-          text-align: center;
-          min-width: 10rem;
-          white-space: nowrap; /* Verhindert Umbrüche innerhalb der Zellen */
-          background-color: #ffffff;
-        }
-      }
-    
-      &__row {
-        height: 3rem; /* Einheitliche Höhe für Zeilen */
-        border-bottom: 1px solid #ddd; /* Zeilenabgrenzung */
-        display: flex;
-        align-items: center; /* Inhalte vertikal zentrieren */
-      }
-    
-      &__cell {
-        padding: 0.0rem;
-        height: 100%;
-        width: 100%;
-      }
-    
+  width: 100%; /* Der Platz, den die Tabelle im Layout einnimmt */
+  overflow-x: auto; /* Ermöglicht horizontales Scrollen */
+  border: 1px solid #999; /* Optional: Rahmen um die Tabelle */
+  padding: 0;
 }
 
+.sunday-cell {
+  background-color: #ffcccc; /* Heller roter Hintergrund */
+  color: #b30000; /* Dunkelrote Schrift */
+}
+
+.planning-table {
+  min-width: 100%;
+  border-collapse: collapse; /* Ränder der Zellen zusammenfassen */
+
+  &__thead {
+    height: 100%;
+
+    tr {
+      padding: 0;
+      height: 100%;
+    }
+
+    th {
+      height: 3rem;
+      background-color: #f0f0f0;
+      font-weight: bold;
+      border: 1px solid #ccc;
+      text-align: center;
+      white-space: nowrap; /* Verhindert Umbrüche innerhalb der Zellen */
+      padding: 0;
+    }
+  }
+
+  &__tbody {
+    td {
+      border: 1px solid #ccc;
+      text-align: center;
+      min-width: 10rem;
+      white-space: nowrap; /* Verhindert Umbrüche innerhalb der Zellen */
+      background-color: #ffffff;
+      padding: 0;
+    }
+  }
+
+  &__row {
+    height: 3rem; /* Einheitliche Höhe für Zeilen */
+    border-bottom: 1px solid #ddd; /* Zeilenabgrenzung */
+    display: flex;
+    align-items: center; /* Inhalte vertikal zentrieren */
+  }
+
+  &__cell {
+    padding: 0rem;
+    height: 100%;
+    width: 100%;
+  }
+}

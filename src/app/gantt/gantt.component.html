@@ -1,44 +1,61 @@
 <div class="gantt-table-container">
-    <div class="planning-table-wrapper" 
+  <div
+    class="planning-table-wrapper"
     (scroll)="updateVisibleRange($event)"
     (mousemove)="updateMouseTime($event)"
-    (wheel)="handleMouseZoom($event)" >
-        <table class="planning-table">
-            <thead class="planning-table__thead">
-                <tr class="planning-table__row">
-                    <th class="planning-table__cell" 
-                    *ngFor="let time of visibleTimes"
-                    [attr.colspan]="time.colspan"
-                    [ngStyle]="{ 'width': getColumnWidth() + 'rem' }">
-                        {{ formatTime(time.start)}}
-                    </th>
-                </tr>
-                <tr class="planning-table__row">
-                    <ng-container *ngFor="let time of visibleTimes">
-                      <th *ngFor="let sub of time.subtimes" class="planning-table__cell">
-                        {{ sub }}
-                      </th>
-                    </ng-container>
-                </tr>
-            </thead>
-            <tbody class="planning-table__tbody">
-                <tr class="planning-table__row" *ngFor="let resourceId of resourceIds">
-                    <td class="planning-table__cell" 
-                    *ngFor="let time of visibleTimes"
-                    [attr.colspan]="time.colspan"
-                    [ngStyle]="{ 'width': getColumnWidth() + 'rem' }"></td>
-                </tr>
-            </tbody>
-        </table>
-    </div>
-    <div class="button-container">
-        <button title="zoom In" (click)="zoomIn()">+</button>
-        <button title="zoom Out" (click)="zoomOut()">−</button>
-        <button title="Edit">✎</button>
-    </div>
+    (wheel)="handleMouseZoom($event)"
+  >
+    <table class="planning-table">
+      <thead class="planning-table__thead">
+        <tr class="planning-table__row">
+          <th
+            class="first-row-cell"
+            *ngFor="let time of visibleTimes"
+            [attr.colspan]="time.colspan"
+            [ngStyle]="{
+              width: time.colspan * (time.columnWidth + 2) - 2 + 'px',
+            }"
+          >
+            {{ formatTime(time.start) }}
+          </th>
+        </tr>
+        <tr class="planning-table__row">
+          <ng-container *ngFor="let time of visibleTimes">
+            <th
+              *ngFor="let sub of time.subtimes"
+              class="second-row-cell"
+              [ngStyle]="{
+                width: time.columnWidth ? time.columnWidth + 'px' : 'auto',
+              }"
+              [ngClass]="{ 'sunday-cell': sub.isSunday }"
+            >
+              {{ sub.label }}
+            </th>
+          </ng-container>
+        </tr>
+      </thead>
+      <tbody class="planning-table__tbody">
+        <tr class="planning-table__row" *ngFor="let resourceId of resourceIds">
+          <td
+            class="planning-table__cell"
+            *ngFor="let time of visibleTimes"
+            [attr.colspan]="time.colspan"
+            [ngStyle]="{
+              width: time.colspan * (time.columnWidth + 2) - 2 + 'px',
+            }"
+          ></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="button-container">
+    <button title="zoom In" (click)="zoomIn()">+</button>
+    <button title="zoom Out" (click)="zoomOut()">−</button>
+    <button title="Edit">✎</button>
+  </div>
 </div>
 <div class="status-bar">
-    <span>Bereich: {{ firstVisibleTime }} - {{ lastVisibleTime }}</span>
-    <span>Maus über: {{ mouseTime }}</span>
-    <span>Zoomlevel: {{ getZoomLabel() }}</span>
-  </div>
+  <span>Bereich: {{ firstVisibleTime }} - {{ lastVisibleTime }}</span>
+  <span>Maus über: {{ mouseTime }}</span>
+  <span>Zoomlevel: {{ getZoomLabel() }}</span>
+</div>

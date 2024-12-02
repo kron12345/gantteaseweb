@@ -4,7 +4,8 @@
   overflow: hidden; /* Kein Scrollen des Layouts */
 }
 
-.resources, .gantt {
+.resources,
+.gantt {
   display: flex;
   flex-direction: column; /* Zeilen vertikal anordnen */
   overflow-y: auto; /* Vertikales Scrollen erlauben */

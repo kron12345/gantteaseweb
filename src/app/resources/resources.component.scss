@@ -1,9 +1,8 @@
 .resources-table-container {
-    display: flex;
-    justify-content: space-between;  /* Abstand zwischen Tabelle und Buttons */
-    align-items: flex-start; /* Oberkante der Elemente ausrichten */
-    overflow: auto;
-    width: 100%;
-    height: 100vh;
-  }
-
+  display: flex;
+  justify-content: space-between; /* Abstand zwischen Tabelle und Buttons */
+  align-items: flex-start; /* Oberkante der Elemente ausrichten */
+  overflow: auto;
+  width: 100%;
+  height: 100vh;
+}
