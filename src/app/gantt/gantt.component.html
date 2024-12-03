@@ -35,7 +35,9 @@
         </tr>
       </thead>
       <tbody class="planning-table__tbody">
-        <tr class="planning-table__row" *ngFor="let resourceId of resourceIds">
+        <tr class="planning-table__row" *ngFor="let resourceId of resourceIds"
+        [ngClass]="{ 'selected-row': isSelected(resourceId) }"
+        (click)="selectOnly(resourceId)">
           <td
             class="planning-table__cell"
             *ngFor="let time of visibleTimes"

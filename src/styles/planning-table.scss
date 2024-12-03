@@ -39,8 +39,10 @@
       text-align: center;
       min-width: 10rem;
       white-space: nowrap; /* Verhindert Umbrüche innerhalb der Zellen */
-      background-color: #ffffff;
       padding: 0;
+    }
+    .selected-row {
+      background-color: #d0e8ff; /* Helles Blau */
     }
   }
 

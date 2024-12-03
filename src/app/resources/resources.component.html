@@ -3,11 +3,23 @@
     <table class="planning-table">
       <thead class="planning-table__thead">
         <tr class="planning-table__row">
+          <th>Name</th>
           <th class="planning-table__cell">Name</th>
         </tr>
       </thead>
       <tbody class="planning-table__tbody">
-        <tr class="planning-table__row" *ngFor="let resource of resources">
+        <tr class="planning-table__row"
+          *ngFor="let resource of resources; trackBy: trackByResourceId"
+          [ngClass]="{ 'selected-row': isSelected(resource.id) }"
+          (click)="toggleSelection(resource.id)"
+        >
+          <td>
+            <input
+              type="checkbox"
+              [checked]="isSelected(resource.id)"
+              (click)="toggleSelection(resource.id, $event)"
+            />
+          </td>
           <td class="planning-table__cell">
             {{ resource.name }}
           </td>

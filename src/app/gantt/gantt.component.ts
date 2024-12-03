@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { ResourceService } from '../services/resource.service';
+import { SelectionService } from '../services/selection.service';
 import { CommonModule } from '@angular/common';
 import { getDynamicColumnWidth, remToPx, pxToRem } from '../shared/utils';
 
@@ -151,7 +152,9 @@ export class GanttComponent implements OnInit {
     },
   ];
 
-  constructor(private resourceService: ResourceService) {}
+  constructor(
+    private resourceService: ResourceService,
+    private selectionService: SelectionService) {}
 
   ngOnInit() {
     const resources = this.resourceService.getResources(); // Ressourcen laden
@@ -505,6 +508,21 @@ export class GanttComponent implements OnInit {
   isSunday(date: string): boolean {
     const parsedDate = new Date(date);
     return parsedDate.getDay() === 0; // 0 entspricht Sonntag
+  }
+
+
+  toggleSelection(resourceId: number, event?: MouseEvent): void {
+    if (event) event.stopPropagation(); // Verhindert das doppelte Triggern
+    this.selectionService.toggleSelection(resourceId);
+  }
+
+  isSelected(resourceId: number): boolean {
+    return this.selectionService.isSelected(resourceId);
+  }
+
+  selectOnly(resourceId: number): void {
+    this.selectionService.clearSelection(); // Alle bisherigen Auswahl entfernen
+    this.selectionService.toggleSelection(resourceId); // Nur die geklickte Zeile auswählen
   }
 }
 
