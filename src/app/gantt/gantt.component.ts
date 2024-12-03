@@ -37,6 +37,10 @@ export class GanttComponent implements OnInit {
   lastVisibleTime: Date = new Date(); // Letzter sichtbarer Zeitpunkt
   mouseTime: Date = new Date(); // Zeitpunkt unter der Maus
 
+  private resizingResourceId: number | null = null;
+  private initialMouseY: number = 0;
+  private initialHeight: number = 0; 
+
   zoomLevels = [
     {
       level: 1,
@@ -154,7 +158,11 @@ export class GanttComponent implements OnInit {
 
   constructor(
     private resourceService: ResourceService,
-    private selectionService: SelectionService) {}
+    private selectionService: SelectionService,
+    ) {
+      this.onResizing = this.onResizing.bind(this);
+      this.onResizeEnd = this.onResizeEnd.bind(this);
+    }
 
   ngOnInit() {
     const resources = this.resourceService.getResources(); // Ressourcen laden
@@ -524,6 +532,39 @@ export class GanttComponent implements OnInit {
     this.selectionService.clearSelection(); // Alle bisherigen Auswahl entfernen
     this.selectionService.toggleSelection(resourceId); // Nur die geklickte Zeile auswählen
   }
+
+  onResizeStart(event: MouseEvent, resourceId: number): void {
+    event.preventDefault(); // Verhindert unerwünschte Selektionen
+  
+    this.resizingResourceId = resourceId;
+    this.initialMouseY = event.clientY;
+    this.initialHeight = this.selectionService.getRowHeight(resourceId);
+  
+    // Events für Resizing
+    document.addEventListener('mousemove', this.onResizing.bind(this));
+    document.addEventListener('mouseup', this.onResizeEnd.bind(this));
+  }
+  
+  onResizing(event: MouseEvent): void {
+    if (this.resizingResourceId !== null) {
+      const deltaY = event.clientY - this.initialMouseY;
+      const newHeight = Math.max(20, this.initialHeight + deltaY); // Mindesthöhe 20px
+      this.selectionService.updateRowHeight(this.resizingResourceId, newHeight);
+    }
+  }
+  
+  onResizeEnd(): void {
+    this.resizingResourceId = null;
+  
+    // Entferne Events nach Abschluss des Resizing
+    document.removeEventListener('mousemove', this.onResizing.bind(this));
+    document.removeEventListener('mouseup', this.onResizeEnd.bind(this));
+  }
+  
+  getRowHeight(resourceId: number): number {
+    return this.selectionService.getRowHeight(resourceId);
+  }
+  
 }
 
 interface Subtime {

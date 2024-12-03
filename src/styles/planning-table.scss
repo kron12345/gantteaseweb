@@ -44,6 +44,21 @@
     .selected-row {
       background-color: #d0e8ff; /* Helles Blau */
     }
+
+    .planning-table__row {
+      position: relative; /* Notwendig für die absolute Positionierung des Handles */
+    }
+    
+    .resize-handle {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 5px; /* Höhe des Handles */
+      cursor: ns-resize; /* Zeigt an, dass die Höhe verändert werden kann */
+      background-color: lightgray; /* Optional: visuelle Hervorhebung */
+    }
+    
   }
 
   &__row {

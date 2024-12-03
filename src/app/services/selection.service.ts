@@ -21,7 +21,7 @@ export class SelectionService {
       currentSelection.set(resourceId, {
         id: resourceId,
         backgroundColor: 'lightblue',
-        rowHeight: 30,
+        rowHeight: 50,
         selected: false,
       });
       this.emitSelection(currentSelection);
@@ -65,4 +65,22 @@ export class SelectionService {
 
     this.emitSelection(currentSelection);
   }
+
+  updateRowHeight(resourceId: number, height: number): void {
+    this.addSelectedResource(resourceId);
+    const currentSelection = this.selectedResources.getValue();
+    const resource = currentSelection.get(resourceId);
+    if (resource) {
+      resource.rowHeight = height;
+      currentSelection.set(resourceId, resource); // Aktualisiere die Map
+      this.emitSelection(currentSelection); // Benachrichtige Abonnenten
+    }
+  }
+
+  getRowHeight(resourceId: number): number {
+    const height = this.selectedResources.getValue().get(resourceId)?.rowHeight ?? 30;
+    console.log(`RowHeight for resourceId ${resourceId}: ${height}`);
+    return height;
+  }
+  
 }

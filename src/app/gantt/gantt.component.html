@@ -37,7 +37,9 @@
       <tbody class="planning-table__tbody">
         <tr class="planning-table__row" *ngFor="let resourceId of resourceIds"
         [ngClass]="{ 'selected-row': isSelected(resourceId) }"
-        (click)="selectOnly(resourceId)">
+        (click)="selectOnly(resourceId)"
+        [style.height.px]="getRowHeight(resourceId)"
+        >
           <td
             class="planning-table__cell"
             *ngFor="let time of visibleTimes"
@@ -46,6 +48,10 @@
               width: time.colspan * (time.columnWidth + 2) - 2 + 'px',
             }"
           ></td>
+          <div class="resize-handle" 
+          (mousedown)="onResizeStart($event, resourceId)"
+          (mouseup)="onResizeStart($event, resourceId)"
+          ></div>
         </tr>
       </tbody>
     </table>
