@@ -35,5 +35,8 @@ export class ResourcesComponent implements OnInit {
   trackByResourceId(index: number, resource: any): number {
     return resource.id;
   }
+  getRowHeight(resourceId: number): number {
+    return this.selectionService.getRowHeight(resourceId);
+  }
 
 }

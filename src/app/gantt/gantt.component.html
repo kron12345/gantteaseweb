@@ -36,9 +36,9 @@
       </thead>
       <tbody class="planning-table__tbody">
         <tr class="planning-table__row" *ngFor="let resourceId of resourceIds"
-        [ngClass]="{ 'selected-row': isSelected(resourceId) }"
-        (click)="selectOnly(resourceId)"
-        [style.height.px]="getRowHeight(resourceId)"
+          [ngClass]="{ 'selected-row': isSelected(resourceId) }"
+          [style.height.px]="getRowHeight(resourceId)"
+          (click)="selectOnly(resourceId)"
         >
           <td
             class="planning-table__cell"
@@ -49,8 +49,7 @@
             }"
           ></td>
           <div class="resize-handle" 
-          (mousedown)="onResizeStart($event, resourceId)"
-          (mouseup)="onResizeStart($event, resourceId)"
+            (mousedown)="onResizeStart($event, resourceId)"
           ></div>
         </tr>
       </tbody>

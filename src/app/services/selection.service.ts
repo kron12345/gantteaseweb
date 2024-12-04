@@ -54,6 +54,7 @@ export class SelectionService {
   }
 
   selectOnly(resourceId: number): void {
+    this.addSelectedResource(resourceId);
     const currentSelection = this.selectedResources.getValue();
 
     currentSelection.forEach((resource) => (resource.selected = false));
@@ -79,8 +80,6 @@ export class SelectionService {
 
   getRowHeight(resourceId: number): number {
     const height = this.selectedResources.getValue().get(resourceId)?.rowHeight ?? 30;
-    console.log(`RowHeight for resourceId ${resourceId}: ${height}`);
     return height;
   }
-  
 }

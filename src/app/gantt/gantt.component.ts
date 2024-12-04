@@ -529,8 +529,7 @@ export class GanttComponent implements OnInit {
   }
 
   selectOnly(resourceId: number): void {
-    this.selectionService.clearSelection(); // Alle bisherigen Auswahl entfernen
-    this.selectionService.toggleSelection(resourceId); // Nur die geklickte Zeile auswählen
+    this.selectionService.selectOnly(resourceId); // Nur die geklickte Zeile auswählen
   }
 
   onResizeStart(event: MouseEvent, resourceId: number): void {

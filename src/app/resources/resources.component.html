@@ -11,6 +11,7 @@
         <tr class="planning-table__row"
           *ngFor="let resource of resources; trackBy: trackByResourceId"
           [ngClass]="{ 'selected-row': isSelected(resource.id) }"
+          [style.height.px]="getRowHeight(resource.id)"
           (click)="toggleSelection(resource.id)"
         >
           <td>
